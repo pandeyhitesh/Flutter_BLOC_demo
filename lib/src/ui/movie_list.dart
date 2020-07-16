@@ -1,11 +1,32 @@
+import 'dart:js';
+
 import 'package:flutter/material.dart';
+import 'package:my_movies/src/blocs/movie_detail_bloc_provider.dart';
+import 'package:my_movies/src/ui/movie_detail.dart';
 import '../models/item_model.dart';
 import '../blocs/movies_bloc.dart';
 
-class MovieList extends StatelessWidget {
+class MovieList extends StatefulWidget {
+  @override
+  _MovieListState createState() => _MovieListState();
+}
+
+class _MovieListState extends State<MovieList> {
+
+  @override
+  void initState() {
+    super.initState();
+    bloc.fetchAllMovies();
+  }
+
+  @override
+  void dispose() {
+    bloc.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    bloc.fetchAllMovies();
     return Scaffold(
       appBar: AppBar(
         title: Text('Popular Movies'),
@@ -30,11 +51,34 @@ class MovieList extends StatelessWidget {
         gridDelegate:
             new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
         itemBuilder: (BuildContext context, int index) {
-          return Image.network(
-            'https://image.tmdb.org/t/p/w185${snapshot.data
-                .results[index].poster_path}',
-            fit: BoxFit.cover,
+          return GridTile(
+            child: InkResponse(
+              enableFeedback: true,
+              child: Image.network(
+                'https://image.tmdb.org/t/p/w185${snapshot.data
+                    .results[index].poster_path}',
+                fit: BoxFit.cover,
+              ),
+              onTap: () => openDetailPage(context, snapshot.data, index),
+            ),
           );
         });
+  }
+
+  openDetailPage(BuildContext context, ItemModel data, int index){
+    Navigator.push(context,
+    MaterialPageRoute(builder: (context){
+      return MovieDetailBlocProvider(
+        child: MovieDetail(
+          title: data.results[index].title,
+          posterUrl: data.results[index].backdrop_path,
+          description: data.results[index].overview,
+          releaseDate: data.results[index].release_date,
+          voteAverage: data.results[index].vote_average.toString(),
+          movieId: data.results[index].id,
+        ),
+      );
+    })
+    );
   }
 }
